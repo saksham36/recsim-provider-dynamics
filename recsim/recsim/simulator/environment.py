@@ -159,6 +159,8 @@ class SingleUserEnvironment(AbstractEnvironment):
     """
     self._user_model.reset()
     user_obs = self._user_model.create_observation()
+    # Reset sampler to reset provider dynamics
+    self._document_sampler.reset_sampler()
     if self._resample_documents:
       self._do_resample_documents()
     self._current_documents = collections.OrderedDict(
@@ -199,18 +201,18 @@ class SingleUserEnvironment(AbstractEnvironment):
     self._user_model.update_state(documents, responses)
 
     # Update the documents' state.
-    self._document_sampler.update_state(documents, responses)
-
+    doc_done = self._document_sampler.update_state(documents, responses)
     # Obtain next user state observation.
     user_obs = self._user_model.create_observation()
 
     # Check if reaches a terminal state and return.
     done = self._user_model.is_terminal()
-
-    # Optionally, recreate the candidate set to simulate candidate
-    # generators for the next query.
-    if self._resample_documents:
-      self._do_resample_documents()
+    done = done or doc_done
+    if not doc_done:
+      # Optionally, recreate the candidate set to simulate candidate
+      # generators for the next query.
+      if self._resample_documents:
+        self._do_resample_documents()
 
     # Create observation of candidate set.
     self._current_documents = collections.OrderedDict(

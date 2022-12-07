@@ -158,7 +158,7 @@ class RecSimGymEnv(gym.Env):
         response=all_responses)
 
     # extract rewards from responses
-    reward = self._reward_aggregator(responses)
+    reward = self._reward_aggregator(responses, self.environment._document_sampler)
     info = self.extract_env_info()
     return obs, reward, done, info
 
